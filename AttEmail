@@ -1,0 +1,33 @@
+//Send purchased downloadable files as attachments in the Order Completed and Invoice emails
+add_filter(
+  'woocommerce_email_attachments',
+  function( $attachments, $status, WC_Order $order ) {
+    if ( ! is_object( $order ) || ! isset( $status ) ) {
+      return $attachments;
+    }
+
+    if ( empty( $order ) ) {
+      return $attachments;
+    }
+
+    if ( ! $order->has_downloadable_item() ) {
+      return $attachments;
+    }
+
+    $allowed_statuses = array( 'customer_invoice', 'customer_completed_order' );
+
+    if ( isset( $status ) && in_array( $status, $allowed_statuses ) ) {
+      /**
+       * @var WC_Order_Item_Product $item
+       */
+      foreach ( $order->get_items() as $item_id => $item ) {
+        foreach ( $item->get_item_downloads() as $download ) {
+          $attachments[] = str_replace( content_url(), WP_CONTENT_DIR, $download['file'] );
+        }
+      }
+    }
+    return $attachments;
+  },
+  10,
+  3
+);
